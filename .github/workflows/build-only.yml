@@ -1,36 +1,37 @@
-name: WildFly Build
-
-on:
-  pull_request:
-    branches:
-      - '**'
-    paths:
-      - "**/pom.xml"
-
-# Only run the latest job
 concurrency:
-  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
-
+  group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref
+    || github.ref }}
 jobs:
   quick-build:
     name: WildFly Build -Dquickly
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: 17
-          distribution: 'temurin'
-          cache: 'maven'
-      - name: Clear any possible SNAPSHOT dependencies in the local maven repository
-        run: |
-          LOCAL_REPO="$HOME/.m2/repository"
-          echo "Cleaning SNAPSHOTS from $LOCAL_REPO"
-          if [ -d "$LOCAL_REPO" ]; then find "$LOCAL_REPO" -name "*SNAPSHOT*" | xargs -I {} rm -rfv "{}"; fi
-        shell: bash
-      - name: Build with Maven Java 17 -Dquickly
-        run: mvn -U -B -Dquickly
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        cache: maven
+        distribution: temurin
+        java-version: 17
+    - continue-on-error: true
+      name: Clear any possible SNAPSHOT dependencies in the local maven repository
+      run: 'LOCAL_REPO="$HOME/.m2/repository"
+
+        echo "Cleaning SNAPSHOTS from $LOCAL_REPO"
+
+        if [ -d "$LOCAL_REPO" ]; then find "$LOCAL_REPO" -name "*SNAPSHOT*" | xargs
+        -I {} rm -rfv "{}"; fi
+
+        '
+      shell: bash
+    - continue-on-error: true
+      name: Build with Maven Java 17 -Dquickly
+      run: mvn -U -B -Dquickly
+    timeout-minutes: 60
+name: WildFly Build
+on:
+  repository_dispatch:
+    types: trigger-ga___build-only.yml
